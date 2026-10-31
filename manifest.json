@@ -1,0 +1,60 @@
+{
+  "manifest_version": 3,
+  "name": "WikiMasters Bot - Auto-Pulls & Classement Thématique",
+  "version": "1.1.0",
+  "description": "Bot pour WikiMasters : ouverture automatique des packs et classification intelligente de vos cartes selon vos thèmes favoris.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": [
+    "storage",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://www.wiki-masters.com/*",
+    "https://wiki-masters.com/*",
+    "https://*.wikipedia.org/*",
+    "https://www.wikidata.org/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "WikiMasters Bot",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.wiki-masters.com/*",
+        "https://wiki-masters.com/*"
+      ],
+      "js": [
+        "classifier.js",
+        "discard.js",
+        "content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "page-bridge.js",
+        "classifier.js",
+        "icons/*"
+      ],
+      "matches": [
+        "https://www.wiki-masters.com/*",
+        "https://wiki-masters.com/*"
+      ]
+    }
+  ]
+}

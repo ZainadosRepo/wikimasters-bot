@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>WikiMasters Bot</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="header">
+      <div class="logo">
+        <span class="icon">🤖</span>
+        <h1>Wiki<span>Masters</span> Bot</h1>
+      </div>
+      <div id="status-badge" class="badge off">OFF</div>
+    </header>
+
+    <div class="status-card">
+      <div class="status-info">
+        <span class="label">Statut du Bot :</span>
+        <span id="status-text" class="value">En pause</span>
+      </div>
+      <button id="btn-toggle" class="btn btn-primary">
+        ▶️ Activer le Bot
+      </button>
+    </div>
+
+    <div class="stats-card">
+      <div class="stat-item">
+        <span class="stat-num" id="stat-packs">0</span>
+        <span class="stat-label">Packs ouverts</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num" id="stat-tagged">0</span>
+        <span class="stat-label">Cartes classées</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a href="https://www.wiki-masters.com/pulls" target="_blank" class="btn btn-secondary">
+        🌐 Aller sur WikiMasters /pulls
+      </a>
+    </div>
+
+    <footer class="footer">
+      <span>Auto-Pulls & Classification Thématique</span>
+    </footer>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
