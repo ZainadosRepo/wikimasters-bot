@@ -1,0 +1,29 @@
+name: Release
+
+# Packs the extension (.zip) and the userscript into a draft release.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - name: Pack the extension
+        run: |
+          version=$(node -p "require('./manifest.json').version")
+          [ "v$version" = "$GITHUB_REF_NAME" ] || { echo "tag $GITHUB_REF_NAME does not match manifest $version"; exit 1; }
+          mkdir -p dist
+          zip -r "dist/wikimasters-bot-$version.zip" manifest.json background.js classifier.js content.js discard.js page-bridge.js icons popup
+          cp wikimasters-bot.user.js dist/
+      - run: gh release create "$GITHUB_REF_NAME" dist/* --draft --title "WikiMasters Bot $GITHUB_REF_NAME"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

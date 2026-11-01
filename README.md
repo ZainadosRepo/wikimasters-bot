@@ -1,5 +1,8 @@
 # 🤖 WikiMasters Bot
 
+[![Release](https://img.shields.io/github/v/release/ZainadosRepo/wikimasters-bot)](https://github.com/ZainadosRepo/wikimasters-bot/releases/latest)
+[![CI](https://github.com/ZainadosRepo/wikimasters-bot/actions/workflows/ci.yml/badge.svg)](https://github.com/ZainadosRepo/wikimasters-bot/actions/workflows/ci.yml)
+
 Extension de navigateur (et userscript Tampermonkey) pour le jeu de cartes [WikiMasters](https://www.wiki-masters.com) :
 
 - **Ouverture automatique des paquets** dès qu'ils sont disponibles, en les accumulant avant d'ouvrir.
@@ -14,27 +17,26 @@ Tout tourne dans votre navigateur, sur votre session de jeu : aucun serveur, auc
 
 ## 📥 Télécharger
 
-**Option 1 : ZIP (le plus simple)**
-Sur cette page GitHub : bouton vert **Code** → **Download ZIP**, puis décompressez le dossier.
+Dernière version : **[Releases › Latest](https://github.com/ZainadosRepo/wikimasters-bot/releases/latest)**
 
-**Option 2 : Git**
-```bash
-git clone https://github.com/ZainadosRepo/wikimasters-bot.git
-```
+| Pour | Fichier |
+| --- | --- |
+| Chrome, Edge, Brave (extension) | `wikimasters-bot-<version>.zip` |
+| Tampermonkey / Violentmonkey (userscript) | `wikimasters-bot.user.js` |
 
 ## 🔧 Installer
 
 ### Extension Chrome / Edge / Brave (recommandé)
-1. Ouvrez `chrome://extensions` (ou `edge://extensions`).
-2. Activez le **Mode développeur** (en haut à droite).
-3. Cliquez sur **Charger l'extension non empaquetée** et choisissez le dossier téléchargé (celui qui contient `manifest.json`).
+1. Décompressez `wikimasters-bot-<version>.zip` dans un dossier que vous gardez.
+2. Ouvrez `chrome://extensions` (ou `edge://extensions`) et activez le **Mode développeur** (en haut à droite).
+3. Cliquez sur **Charger l'extension non empaquetée** et choisissez ce dossier (celui qui contient `manifest.json`).
 4. Allez sur [wiki-masters.com/pulls](https://www.wiki-masters.com/pulls) : la pastille **🤖 WikiMasters Bot** apparaît en bas à gauche.
 
-Pour mettre à jour : remplacez le dossier par la nouvelle version, puis cliquez sur **↻** sur la carte de l'extension dans `chrome://extensions`.
+Pour mettre à jour : décompressez la nouvelle version dans le même dossier, puis cliquez sur **↻** sur la carte de l'extension dans `chrome://extensions`. Vos thèmes et réglages sont conservés.
 
 ### Userscript (Tampermonkey / Violentmonkey)
 1. Installez [Tampermonkey](https://www.tampermonkey.net/) ou [Violentmonkey](https://violentmonkey.github.io/).
-2. Créez un nouveau script et collez-y tout le contenu de [`wikimasters-bot.user.js`](wikimasters-bot.user.js).
+2. Ouvrez `wikimasters-bot.user.js` depuis la release : le gestionnaire propose de l'installer. Sinon, créez un nouveau script et collez-y tout son contenu.
 3. Enregistrez, puis rechargez wiki-masters.com.
 
 ## 🎮 Utiliser
@@ -103,3 +105,5 @@ Le bot apprend sur la moitié de vos cartes taguées et est noté sur l'autre mo
   ]
 }
 ```
+
+**Publier une version** : monter `version` dans `manifest.json` et `package.json`, régénérer le userscript (`npm run build`), puis pousser un tag `v<version>`. `.github/workflows/release.yml` vérifie les tests et crée une release en brouillon avec le zip de l'extension et le userscript ; il reste à la relire et la publier.
