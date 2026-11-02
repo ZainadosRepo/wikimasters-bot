@@ -7,7 +7,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   const statTagged = document.getElementById('stat-tagged');
 
   // Charger les données stockées
-  const { settings = {} } = await chrome.storage.local.get('settings');
+  const { settings = {}, update } = await chrome.storage.local.get(['settings', 'update']);
+
+  // Nouvelle version repérée par le service worker (vérification quotidienne)
+  const installed = chrome.runtime.getManifest().version;
+  document.getElementById('version').textContent = `v${installed}`;
+  const available = update && newerVersion(installed, update.version);
+  if (available) {
+    const link = document.getElementById('update');
+    link.href = update.url;
+    link.textContent = `⬆️ Version ${available} disponible : télécharger`;
+    link.hidden = false;
+  }
   let isEnabled = settings.botEnabled || false;
 
   function updateView() {

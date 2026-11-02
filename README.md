@@ -32,12 +32,14 @@ Dernière version : **[Releases › Latest](https://github.com/ZainadosRepo/wiki
 3. Cliquez sur **Charger l'extension non empaquetée** et choisissez ce dossier (celui qui contient `manifest.json`).
 4. Allez sur [wiki-masters.com/pulls](https://www.wiki-masters.com/pulls) : la pastille **🤖 WikiMasters Bot** apparaît en bas à gauche.
 
-Pour mettre à jour : décompressez la nouvelle version dans le même dossier, puis cliquez sur **↻** sur la carte de l'extension dans `chrome://extensions`. Vos thèmes et réglages sont conservés.
+**Mises à jour** : l'extension regarde chaque jour si une nouvelle version est publiée. Si oui, son icône affiche **↑** (`ON↑` / `OFF↑`) et la popup propose **⬆️ Version … disponible : télécharger**. Chrome ne met pas à jour seul une extension chargée hors du Chrome Web Store : décompressez la nouvelle version dans le même dossier, puis cliquez sur **↻** sur la carte de l'extension dans `chrome://extensions`. Vos thèmes et réglages sont conservés. La version installée est écrite en bas de la popup. Jusqu'à la 1.1.0 incluse, l'extension ne fait pas cette vérification.
 
 ### Userscript (Tampermonkey / Violentmonkey)
 1. Installez [Tampermonkey](https://www.tampermonkey.net/) ou [Violentmonkey](https://violentmonkey.github.io/).
-2. Ouvrez `wikimasters-bot.user.js` depuis la release : le gestionnaire propose de l'installer. Sinon, créez un nouveau script et collez-y tout son contenu.
+2. Ouvrez [wikimasters-bot.user.js](https://github.com/ZainadosRepo/wikimasters-bot/releases/latest/download/wikimasters-bot.user.js) : le gestionnaire propose de l'installer. Sinon, créez un nouveau script et collez-y tout son contenu.
 3. Enregistrez, puis rechargez wiki-masters.com.
+
+**Mises à jour** : automatiques depuis la 1.2.0. Le gestionnaire vérifie la dernière release (environ une fois par jour, ou via **Rechercher des mises à jour**) et installe toute version plus récente. Si vous avez installé la 1.1.0, réinstallez une fois depuis le lien ci-dessus : elle ne savait pas où chercher ses mises à jour.
 
 ## 🎮 Utiliser
 
@@ -106,4 +108,4 @@ Le bot apprend sur la moitié de vos cartes taguées et est noté sur l'autre mo
 }
 ```
 
-**Publier une version** : monter `version` dans `manifest.json` et `package.json`, régénérer le userscript (`npm run build`), puis pousser un tag `v<version>`. `.github/workflows/release.yml` vérifie les tests et crée une release en brouillon avec le zip de l'extension et le userscript ; il reste à la relire et la publier.
+**Publier une version** : monter `version` dans `manifest.json` et `package.json`, régénérer le userscript (`npm run build`), puis pousser un tag `v<version>`. `.github/workflows/release.yml` vérifie les tests et crée une release en brouillon avec le zip de l'extension et le userscript ; il reste à la relire et la publier. Les extensions et userscripts installés ne voient la nouvelle version qu'une fois la release publiée (le brouillon est ignoré).

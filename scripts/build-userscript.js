@@ -8,6 +8,8 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const OUT = path.join(ROOT, 'wikimasters-bot.user.js');
 const SOURCES = ['classifier.js', 'discard.js', 'page-bridge.js', 'content.js'];
+// Tampermonkey and Violentmonkey poll this and install any higher @version on their own.
+const LATEST_USERSCRIPT = 'https://github.com/ZainadosRepo/wikimasters-bot/releases/latest/download/wikimasters-bot.user.js';
 
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/\r\n/g, '\n');
 
@@ -49,6 +51,8 @@ function buildUserscript() {
 // @name         WikiMasters Bot - Auto-Pulls, Classement & Défausse
 // @namespace    https://wiki-masters.com/
 // @version      ${manifest.version}
+// @updateURL    ${LATEST_USERSCRIPT}
+// @downloadURL  ${LATEST_USERSCRIPT}
 // @description  ${manifest.description}
 // @match        https://www.wiki-masters.com/*
 // @match        https://wiki-masters.com/*
@@ -67,4 +71,4 @@ if (require.main === module) {
   console.log(`Wrote ${path.relative(ROOT, OUT)}`);
 }
 
-module.exports = { buildUserscript, OUT };
+module.exports = { buildUserscript, OUT, LATEST_USERSCRIPT };

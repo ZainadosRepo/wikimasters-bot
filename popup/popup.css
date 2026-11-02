@@ -170,3 +170,24 @@ body {
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   padding-top: 8px;
 }
+
+.update {
+  display: block;
+  padding: 9px 12px;
+  border-radius: 9px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+  font-weight: 700;
+  font-size: 12px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.update:hover {
+  background: rgba(245, 158, 11, 0.2);
+}
+
+.update[hidden] {
+  display: none;
+}

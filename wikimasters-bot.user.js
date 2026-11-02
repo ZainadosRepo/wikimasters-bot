@@ -1,7 +1,9 @@
 // ==UserScript==
 // @name         WikiMasters Bot - Auto-Pulls, Classement & Défausse
 // @namespace    https://wiki-masters.com/
-// @version      1.1.0
+// @version      1.2.0
+// @updateURL    https://github.com/ZainadosRepo/wikimasters-bot/releases/latest/download/wikimasters-bot.user.js
+// @downloadURL  https://github.com/ZainadosRepo/wikimasters-bot/releases/latest/download/wikimasters-bot.user.js
 // @description  Bot pour WikiMasters : ouverture automatique des packs et classification intelligente de vos cartes selon vos thèmes favoris.
 // @match        https://www.wiki-masters.com/*
 // @match        https://wiki-masters.com/*
