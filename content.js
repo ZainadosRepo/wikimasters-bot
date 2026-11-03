@@ -172,6 +172,10 @@
 
   async function syncCollectionLearning(silent = false) {
     if (!classifier || typeof classifier.learnFromCollection !== 'function') return null;
+    if (classifier.isMemoryLocked()) {
+      if (silent) return null;
+      if (!confirm('La mémoire actuelle a été importée depuis un autre compte. La remplacer par ce que vous avez classé sur ce compte ?')) return null;
+    }
     const learnBtn = document.getElementById('wm-btn-learn-collection');
     if (learnBtn) {
       learnBtn.disabled = true;
@@ -215,9 +219,10 @@
     if (el) {
       if (stats.totalTaggedCards > 0) {
         const themeSummary = Object.entries(stats.profiles || {})
-          .map(([name, p]) => `${name}: ${p.cardCount}`)
+          .map(([name, p]) => `${escapeHtml(name)}: ${p.cardCount}`)
           .join(' · ');
-        el.innerHTML = `🧠 <b>Mémoire active :</b> ${stats.totalTaggedCards} cartes classées apprises (${stats.knownTitlesCount} titres)<div style="font-size:10px;color:#9ca3af;margin-top:2px;">${themeSummary || ''}</div>`;
+        const origin = classifier.isMemoryLocked() ? ' <b>(importée)</b>' : '';
+        el.innerHTML = `🧠 <b>Mémoire active${origin} :</b> ${stats.totalTaggedCards} cartes classées apprises (${stats.knownTitlesCount} titres)<div style="font-size:10px;color:#9ca3af;margin-top:2px;">${themeSummary || ''}</div>`;
       } else {
         el.innerHTML = `🧠 <b>Mémoire :</b> Cliquez sur « Apprendre de mes cartes » ou « Classer » pour analyser vos tags existants.`;
       }
@@ -862,13 +867,41 @@
         tags: (uc.user_card_tags || []).map(t => t.name).filter(Boolean)
       });
     }
-    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), cards }, null, 1)], { type: 'application/json' });
+    downloadJson({ exportedAt: new Date().toISOString(), cards }, 'wikimasters-collection.json');
+    logActivity(`📤 ${cards.length} cartes exportées (dont ${cards.filter(c => c.tags.length).length} étiquetées).`, 'success');
+  }
+
+  function downloadJson(data, filename) {
+    const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'wikimasters-collection.json';
+    a.download = filename;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-    logActivity(`📤 ${cards.length} cartes exportées (dont ${cards.filter(c => c.tags.length).length} étiquetées).`, 'success');
+  }
+
+  // Mémoire partagée entre comptes : on l'exporte depuis le compte principal, on l'importe sur les autres
+  function exportLearnedMemory() {
+    const memory = classifier.exportMemory();
+    const tagCount = Object.keys(memory.learnedData.tagProfiles || {}).length;
+    if (tagCount === 0) {
+      logActivity('⚠️ Rien à exporter : cliquez d\'abord sur « 🧠 Apprendre de mes cartes déjà classées ».', 'warn');
+      return;
+    }
+    downloadJson(memory, 'wikimasters-memoire.json');
+    logActivity(`💾 Mémoire exportée : ${tagCount} thèmes, ${memory.learnedData.totalTaggedCards || 0} cartes classées.`, 'success');
+  }
+
+  async function importLearnedMemory(file) {
+    if (!file) return;
+    try {
+      const stats = classifier.importMemory(JSON.parse(await file.text()));
+      updateLearnedBadge();
+      updateThemesTab();
+      logActivity(`📥 Mémoire importée : ${Object.keys(stats.profiles).length} thèmes, ${stats.totalTaggedCards} cartes classées. Elle n'est plus écrasée au chargement de la page.`, 'success');
+    } catch (e) {
+      logActivity(`⚠️ Import impossible : ${escapeHtml(e instanceof SyntaxError ? 'le fichier n\'est pas un JSON valide.' : e.message)}`, 'warn');
+    }
   }
 
   // -------------------------------------------------------------
@@ -1440,6 +1473,15 @@
               📤 Exporter mes cartes classées (test de précision)
             </button>
 
+            <button id="wm-btn-export-memory" class="wm-btn-action" style="border-color:rgba(167,139,250,0.5);color:#c4b5fd;" title="Fichier à importer sur vos autres comptes pour qu'ils classent comme celui-ci">
+              💾 Exporter ma mémoire (pour mes autres comptes)
+            </button>
+
+            <button id="wm-btn-import-memory" class="wm-btn-action" style="border-color:rgba(167,139,250,0.5);color:#c4b5fd;" title="Remplace la mémoire de ce navigateur par celle du fichier">
+              📥 Importer une mémoire
+            </button>
+            <input id="wm-input-import-memory" type="file" accept=".json,application/json" style="display:none;">
+
             <div id="wm-learned-status" style="margin-top:8px;padding:7px 10px;border-radius:8px;background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);font-size:11px;color:#ddd6fe;">
               🧠 <b>Mémoire :</b> Synchronisation automatique avec votre collection...
             </div>
@@ -1649,6 +1691,17 @@
     if (btnDiscardCol) btnDiscardCol.onclick = openDiscardModal;
     const btnExportCol = document.getElementById('wm-btn-export-collection');
     if (btnExportCol) btnExportCol.onclick = exportCollectionForEval;
+    const btnExportMemory = document.getElementById('wm-btn-export-memory');
+    if (btnExportMemory) btnExportMemory.onclick = exportLearnedMemory;
+    const inputImportMemory = document.getElementById('wm-input-import-memory');
+    const btnImportMemory = document.getElementById('wm-btn-import-memory');
+    if (btnImportMemory && inputImportMemory) {
+      btnImportMemory.onclick = () => inputImportMemory.click();
+      inputImportMemory.onchange = () => {
+        importLearnedMemory(inputImportMemory.files[0]);
+        inputImportMemory.value = '';
+      };
+    }
 
     const btnDrainAll = document.getElementById('wm-btn-drain-all');
     if (btnDrainAll) {

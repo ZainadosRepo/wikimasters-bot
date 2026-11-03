@@ -134,3 +134,43 @@ test('silent learning (no network) keeps previously learned profiles', async () 
   assert.deepEqual(c.learnedData.tagProfiles.Rallye.features, { 'P641:rallye automobile': 5 });
   assert.equal(c.learnedData.knownCardsByTitle.sebastien, 'Rallye');
 });
+
+test('memory exported from the main account classifies the same way on an account without tags', async () => {
+  const main = new CardClassifier();
+  const { collection, add } = collectionBuilder(main);
+  for (let i = 0; i < 5; i++) {
+    add(`Pilote ${i}`, 'Rallye', { description: 'pilote automobile', categories: ['Pilote de rallye'], wd: { isHuman: true, P106: ['pilote de rallye'], P641: ['rallye automobile'] } });
+  }
+  for (let i = 0; i < 8; i++) {
+    add(`Peintre ${i}`, null, { description: 'peintre', categories: ['Peintre français'], wd: { isHuman: true, P106: ['peintre'] } });
+  }
+  await main.learnFromCollection(collection, [{ id: 'Rallye', name: 'Rallye', color: '#ef4444' }], true);
+  const file = JSON.parse(JSON.stringify(main.exportMemory()));
+
+  const other = new CardClassifier();
+  other.importMemory(file);
+  assert.ok(other.isMemoryLocked());
+  assert.deepEqual(other.getThemes().map(t => [t.name, t.color]), [['Rallye', '#ef4444']]);
+  assert.equal((await other.classifyCard({ id: 'Pilote 0', wikipedia_title: 'Pilote 0' })).theme.name, 'Rallye');
+  withInfo(other, 'Nouveau pilote', { description: 'pilote automobile', categories: ['Pilote de rallye'], wd: { isHuman: true, P106: ['pilote de rallye'], P641: ['rallye automobile'] } });
+  assert.equal((await other.classifyCard({ wikipedia_title: 'Nouveau pilote' })).theme.name, 'Rallye');
+
+  // Le réapprentissage silencieux au chargement de page ne touche pas à la mémoire importée
+  await other.learnFromCollection([{ id: 9, card_id: 9, snapshot_title: 'Autre', user_card_tags: [{ tag_id: 'x', name: 'Autre tag' }] }], [], false);
+  assert.equal(other.learnedData.knownCardsByTitle['pilote 0'], 'Rallye');
+  assert.equal(other.learnedData.knownCardsByTitle.autre, undefined);
+});
+
+test('memory import rejects foreign files and unsafe colors', () => {
+  const c = new CardClassifier();
+  assert.throws(() => c.importMemory({ cards: [] }), /Fichier invalide/);
+  assert.throws(() => c.importMemory({ format: 'wikimasters-bot-memory', learnedData: { tagProfiles: {} } }), /aucun thème/);
+  assert.ok(!c.isMemoryLocked());
+
+  c.importMemory({
+    format: 'wikimasters-bot-memory',
+    learnedData: { tagProfiles: { Rallye: { count: 2, features: { 'P641:rallye automobile': 5, bad: 'x' } } }, tagColors: { Rallye: 'red;background:url(x)' } }
+  });
+  assert.deepEqual(c.learnedData.tagProfiles.Rallye.features, { 'P641:rallye automobile': 5 });
+  assert.equal(c.getThemes()[0].color, '#10b981');
+});
