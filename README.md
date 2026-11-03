@@ -61,6 +61,8 @@ Comment il décide : pour chaque tag, il repère ce que vos cartes ont en commun
 
 L'onglet **🏷️ Mes Thèmes** montre ce qui a été appris et permet de **Tester** un titre de carte.
 
+**Plusieurs comptes qui classent pareil** : ce qui a été appris est gardé dans le navigateur, pas dans le compte. Sur le compte principal, après **🧠 Apprendre**, cliquez sur **💾 Exporter ma mémoire** : vous obtenez `wikimasters-memoire.json`. Sur chaque autre compte, **📥 Importer une mémoire** et choisissez ce fichier. Ses thèmes apparaissent même si le compte n'a encore aucun tag, et les tags sont créés dans le jeu au premier classement. Une mémoire importée n'est plus écrasée au chargement de la page ; cliquer sur **🧠 Apprendre** sur ce compte la remplace (après confirmation). Réexportez et réimportez le fichier après chaque nouvel apprentissage sur le compte principal.
+
 ### Défausser des cartes
 **🗑️ Défausser des cartes** ouvre une fenêtre où vous choisissez :
 - les raretés concernées ;

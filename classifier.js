@@ -1,6 +1,8 @@
 // classifier.js - Moteur d'analyse sémantique profonde, API Wikipédia & Apprentissage de Collection
 (() => {
   const LEARNED_STORAGE_KEY = 'wm_bot_learned_profiles_v3';
+  const MEMORY_FILE_FORMAT = 'wikimasters-bot-memory';
+  const HEX_COLOR_RE = /^#[0-9a-f]{3,8}$/i;
 
   // Aucun thème n'est livré avec le bot : ils sont créés à partir des tags de votre compte
   // (learnFromCollection) ou passés au constructeur. Format d'un thème : voir le README.
@@ -184,6 +186,7 @@
         totalTaggedCards: 0
       };
       this.loadLearnedProfiles();
+      this.addMemoryThemes();
     }
 
     setThemes(themes) {
@@ -207,6 +210,78 @@
           ...custom
         };
       });
+      this.addMemoryThemes();
+    }
+
+    addTagTheme(tagName, color) {
+      if (this.themes.some(t => normalizeText(t.name) === normalizeText(tagName))) return;
+      this.themes.push({
+        id: 'custom_' + normalizeText(tagName).replace(/\s+/g, '_'),
+        name: tagName,
+        color: color || '#10b981',
+        enabled: true,
+        strongKeywords: [tagName.toLowerCase()],
+        keywords: [tagName.toLowerCase()],
+        wikiCategories: [tagName.toLowerCase()],
+        excludeKeywords: []
+      });
+    }
+
+    // Une mémoire importée d'un autre compte apporte ses thèmes : ce compte n'a peut-être encore aucun tag
+    addMemoryThemes() {
+      if (!this.learnedData.locked) return;
+      const colors = this.learnedData.tagColors || {};
+      for (const tagName of Object.keys(this.learnedData.tagProfiles || {})) this.addTagTheme(tagName, colors[tagName]);
+    }
+
+    isMemoryLocked() {
+      return !!this.learnedData.locked;
+    }
+
+    exportMemory() {
+      const { knownCardsById, knownCardsByTitle, tagProfiles, tagColors, lastLearnedAt, totalTaggedCards } = this.learnedData;
+      return {
+        format: MEMORY_FILE_FORMAT,
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        learnedData: { knownCardsById, knownCardsByTitle, tagProfiles, tagColors: tagColors || {}, lastLearnedAt, totalTaggedCards }
+      };
+    }
+
+    // Remplace la mémoire par celle d'un fichier exporté, verrouillée contre l'apprentissage automatique du compte courant
+    importMemory(file) {
+      const isMap = v => !!v && typeof v === 'object' && !Array.isArray(v);
+      const d = file && file.learnedData;
+      if (!isMap(file) || file.format !== MEMORY_FILE_FORMAT || !isMap(d) || !isMap(d.tagProfiles)) {
+        throw new Error('Fichier invalide : ce n\'est pas une mémoire exportée par WikiMasters Bot.');
+      }
+      const tagProfiles = {};
+      for (const [tagName, prof] of Object.entries(d.tagProfiles)) {
+        const name = String(tagName).trim();
+        if (!name || !isMap(prof)) continue;
+        const features = {};
+        for (const [f, w] of Object.entries(isMap(prof.features) ? prof.features : {})) {
+          if (Number.isFinite(w)) features[f] = w;
+        }
+        tagProfiles[name] = { count: Number.isFinite(prof.count) ? prof.count : 0, features };
+      }
+      if (Object.keys(tagProfiles).length === 0) throw new Error('Fichier vide : aucun thème appris.');
+      const strings = m => Object.fromEntries(Object.entries(isMap(m) ? m : {}).filter(([, v]) => typeof v === 'string'));
+      // La couleur finit dans un attribut style : seules les couleurs hexadécimales passent
+      const tagColors = Object.fromEntries(Object.entries(strings(d.tagColors)).filter(([, v]) => HEX_COLOR_RE.test(v)));
+
+      this.learnedData = {
+        knownCardsById: strings(d.knownCardsById),
+        knownCardsByTitle: strings(d.knownCardsByTitle),
+        tagProfiles,
+        tagColors,
+        lastLearnedAt: Number.isFinite(d.lastLearnedAt) ? d.lastLearnedAt : 0,
+        totalTaggedCards: Number.isFinite(d.totalTaggedCards) ? d.totalTaggedCards : 0,
+        locked: true
+      };
+      this.addMemoryThemes();
+      this.saveLearnedProfiles();
+      return this.getLearnedStats();
     }
 
     getThemes() {
@@ -257,6 +332,8 @@
     // =========================================================================
     async learnFromCollection(collection, userTags = [], fetchWikiForExemplars = true) {
       if (!Array.isArray(collection) || collection.length === 0) return this.getLearnedStats();
+      // L'apprentissage silencieux du chargement de page ne doit pas écraser une mémoire importée
+      if (this.learnedData.locked && !fetchWikiForExemplars) return this.getLearnedStats();
 
       // 1. Table de correspondance tag_id -> nom du tag
       const tagIdToName = new Map();
@@ -271,21 +348,7 @@
       }
 
       // S'assurer que tout tag personnalisé présent dans la base de l'utilisateur existe aussi dans this.themes
-      for (const [, tagName] of tagIdToName.entries()) {
-        const exists = this.themes.some(t => normalizeText(t.name) === normalizeText(tagName));
-        if (!exists) {
-          this.themes.push({
-            id: 'custom_' + normalizeText(tagName).replace(/\s+/g, '_'),
-            name: tagName,
-            color: tagColorMap.get(tagName) || '#10b981',
-            enabled: true,
-            strongKeywords: [tagName.toLowerCase()],
-            keywords: [tagName.toLowerCase()],
-            wikiCategories: [tagName.toLowerCase()],
-            excludeKeywords: []
-          });
-        }
-      }
+      for (const [, tagName] of tagIdToName.entries()) this.addTagTheme(tagName, tagColorMap.get(tagName));
 
       const knownCardsById = {};
       const knownCardsByTitle = {};
@@ -383,6 +446,7 @@
         knownCardsById,
         knownCardsByTitle,
         tagProfiles,
+        tagColors: Object.fromEntries([...tagColorMap].filter(([name]) => tagProfiles[name])),
         lastLearnedAt: Date.now(),
         totalTaggedCards: totalTagged
       };
